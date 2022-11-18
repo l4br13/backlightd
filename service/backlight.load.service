@@ -1,0 +1,9 @@
+[Unit]
+Description=backlight load
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/backlight --load
+
+[Install]
+WantedBy=multi-user.target

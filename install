@@ -1,0 +1,22 @@
+#!/bin/sh
+
+dir=$(dirname $(realpath $0))
+service_dir=$dir/service
+script_dir=$dir/script
+program=$(basename $0)
+
+if [ $(id -u) != 0 ]; then
+	exit 1
+fi
+
+cp $script_dir/backlight.sh /usr/bin/backlight
+
+cp -r $service_dir/* /etc/systemd/system/
+
+if [ -f /etc/systemd/system/backlight.load.service ]; then
+	systemctl enable backlight.load
+fi
+
+if [ -f /etc/systemd/system/backlight.save.service ]; then
+	systemctl enable backlight.save
+fi

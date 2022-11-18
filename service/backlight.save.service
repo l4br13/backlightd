@@ -1,0 +1,11 @@
+[Unit]
+Description=backlight save
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+ExecStop=/usr/bin/backlight --save
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
