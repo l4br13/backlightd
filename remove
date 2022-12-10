@@ -6,22 +6,19 @@ script_dir=$dir/script
 program=$(basename $0)
 
 if [ $(id -u) != 0 ]; then
-	printf "$program: permission denied.\n"
 	exit 1
 fi
 
-if [ -f $dir/backlight.sh ]; then
-	cp $dir/backlight.sh /usr/bin/backlight
-fi
-
-if [ -d $service_dir ]; then
-	cp -r $service_dir/* /etc/systemd/system/
+if [ -f /usr/bin/backlight ]; then
+	rm -rf /usr/bin/backlight
 fi
 
 if [ -f /etc/systemd/system/backlight@load.service ]; then
-	systemctl enable backlight@load
+	systemctl disable backlight@load
+	rm -rf /etc/systemd/system/backlight@load.service
 fi
 
 if [ -f /etc/systemd/system/backlight@save.service ]; then
-	systemctl enable backlight@save
+	systemctl disable backlight@save
+	rm -rf /etc/systemd/system/backlight@save.service
 fi

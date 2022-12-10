@@ -1,21 +1,26 @@
 #!/bin/sh
+# Build Date Sat 10 Dec 2022 09:44:56 PM WIB
 
 program=$(basename $0)
+program_version=1.1.0
 program_dir=/var/lib/backlight
 dir=$(dirname $(realpath 0))
 uid=$(id -u)
 backlight=/sys/class/backlight
 
-if [ $uid != 0 ]; then
-	printf "$program: need to run as root.\n"
-	exit
+if [ $(id -u) != 0 ]; then
+	printf "$program: permission denied.\n"
+	exit 1
 fi
 
 if [ ! -d $program_dir ]; then
+	if [ -f $program_dir ]; then
+		rm -rf $program_dir
+	fi
 	mkdir $program_dir
 fi
 
-opt=$(getopt -n $(basename $0) -o hvls -l help,version,load,save,set: -- "$@")
+opt=$(getopt -n $(basename $0) -o hvls -l help,version,enable,disable,load,save,set: -- "$@")
 
 if [ $? -ne 0 ]; then
 	printf "Try '$(basename $0) --help' for more information.\n"
@@ -56,35 +61,6 @@ while true; do
 	shift
 done
 
-__usage () {
-	printf "Usage:	 $(basename $0) [options] [arguments]\n"
-	printf "\n"
-	printf "Options:\n"
-	printf "	--set		set brightness value\n"
-	printf "	--save		save brightness value\n"
-	printf "	--load		load saved brightness value\n"
-	printf "	-v, --version	show version information\n"
-	printf "	-h, --help	show help information\n"
-	printf "\n"
-	return 1
-}
-
-__version () {
-	printf "v1.0\n"
-	return 1
-}
-
-__save() {
-	if [ ! -d $program_dir ]; then
-		mkdir $program_dir
-	fi
-	for panel_dir in $backlight/*; do
-		panel=$(basename $panel_dir)
-		cat $panel_dir/brightness > $program_dir/$panel.brightness
-	done
-	return 1
-}
-
 __load() {
 	if [ ! -d $program_dir ]; then
 		mkdir $program_dir
@@ -96,6 +72,17 @@ __load() {
 		fi
 		brightness=$(cat $program_dir/$panel.brightness)
 		echo $brightness > $panel_dir/brightness
+	done
+	return 1
+}
+
+__save() {
+	if [ ! -d $program_dir ]; then
+		mkdir $program_dir
+	fi
+	for panel_dir in $backlight/*; do
+		panel=$(basename $panel_dir)
+		cat $panel_dir/brightness > $program_dir/$panel.brightness
 	done
 	return 1
 }
@@ -117,16 +104,43 @@ __set () {
 	return 1
 }
 
+__usage () {
+	printf "Usage:	 $(basename $0) [options] [arguments]\n"
+	printf "\n"
+	printf "Options:\n"
+	printf "	--set		set brightness value\n"
+	printf "	--save		save brightness value\n"
+	printf "	--load		load saved brightness value\n"
+	printf "	-v, --version	show version information\n"
+	printf "	-h, --help	show help information\n"
+	printf "\n"
+	return 1
+}
+
+
+__version () {
+	printf "$program v$program_version\n"
+	return 1
+}
+
+if [ ! -z $__version ]; then
+	__version
+	exit
+fi
+
 if [ ! -z $__help ]; then
 	__usage
-elif [ ! -z $__version ]; then
-	__version
-elif [ ! -z $__set ]; then
+	exit 1
+fi
+
+if [ ! -z $__set ]; then
 	__set $__set_args
-elif [ ! -z $__load ]; then
-	__load
-elif [ ! -z $__save ]; then
+fi
+
+if [ ! -z $__save ]; then
 	__save
-else
-	__usage
+fi
+
+if [ ! -z $__load ]; then
+	__load
 fi
